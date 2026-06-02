@@ -71,11 +71,6 @@ void RGBController_PhilipsHue::ResizeZone(int /*zone*/, int /*new_size*/)
 
 void RGBController_PhilipsHue::DeviceUpdateLEDs()
 {
-    unsigned char red = RGBGetRValue(colors[0]);
-    unsigned char grn = RGBGetGValue(colors[0]);
-    unsigned char blu = RGBGetBValue(colors[0]);
-
-    controller->SetColor(red, grn, blu);
 }
 
 void RGBController_PhilipsHue::UpdateZoneLEDs(int /*zone*/)

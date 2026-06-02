@@ -21,6 +21,10 @@ class RGBController_PhilipsHueEntertainment : public RGBController
 public:
     RGBController_PhilipsHueEntertainment(PhilipsHueEntertainmentController* controller_ptr);
 
+    bool        user_enabled = false;
+
+    void        RequestMode(int mode);
+
     void        SetupZones();
     void        ResizeZone(int zone, int new_size);
 

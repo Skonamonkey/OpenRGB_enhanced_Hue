@@ -11,12 +11,23 @@
 
 #pragma once
 
+#include <mutex>
 #include <string>
 #include <vector>
 #include "Bridge.h"
+#include "ColorUnits.h"
 #include "EntertainmentMode.h"
 #include "Group.h"
+#include "Light.h"
 #include "RGBController.h"
+
+struct HueSavedLightState
+{
+    bool                    on          = false;
+    unsigned int            brightness  = 0;
+    hueplusplus::XYBrightness xy        = {{0.f, 0.f}, 0.f};
+    bool                    has_xy      = false;
+};
 
 #define HUE_ENTERTAINMENT_HEADER_SIZE   16
 #define HUE_ENTERTAINMENT_LIGHT_SIZE    9
@@ -40,11 +51,14 @@ public:
     void Disconnect();
 
 private:
-    hueplusplus::Bridge&            bridge;
-    hueplusplus::Group              group;
-    hueplusplus::EntertainmentMode* entertainment;
+    hueplusplus::Bridge&                bridge;
+    hueplusplus::Group                  group;
+    hueplusplus::EntertainmentMode*     entertainment;
 
-    std::string                     location;
-    unsigned int                    num_leds;
-    bool                            connected;
+    std::string                         location;
+    unsigned int                        num_leds;
+    bool                                connected;
+
+    std::mutex                          connection_mutex;
+    std::vector<HueSavedLightState>     saved_states;
 };

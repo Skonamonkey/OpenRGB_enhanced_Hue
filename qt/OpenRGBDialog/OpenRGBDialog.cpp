@@ -8,6 +8,7 @@
 \*---------------------------------------------------------*/
 
 #include "OpenRGBDialog.h"
+#include "RGBController_PhilipsHueEntertainment.h"
 #include "LogManager.h"
 #include "PluginManager.h"
 #include "OpenRGBDevicePage.h"
@@ -399,6 +400,60 @@ OpenRGBDialog::OpenRGBDialog(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     QAction* actionReScan = new QAction(tr("Rescan Devices"), this);
     connect(actionReScan, SIGNAL(triggered()), this, SLOT(on_ButtonRescan_clicked()));
     trayIconMenu->addAction(actionReScan);
+
+    trayIconMenu->addSeparator();
+
+    hueMenu = new QMenu(tr("Hue"), this);
+    trayIconMenu->addMenu(hueMenu);
+
+    connect(trayIconMenu, &QMenu::aboutToShow, this, [=]()
+    {
+        hueMenu->clear();
+
+        std::vector<RGBController*> controllers = ResourceManager::get()->GetRGBControllers();
+        bool hue_found = false;
+
+        for(RGBController* ctrl : controllers)
+        {
+            if(ctrl->GetDescription() != "Philips Hue Entertainment Mode Device")
+            {
+                continue;
+            }
+
+            hue_found = true;
+
+            QMenu* areaMenu = hueMenu->addMenu(QString::fromStdString(ctrl->name));
+
+            QAction* actionDirect       = areaMenu->addAction(tr("Direct"));
+            QAction* actionDisconnected = areaMenu->addAction(tr("Disconnected"));
+
+            actionDirect->setCheckable(true);
+            actionDisconnected->setCheckable(true);
+
+            actionDirect->setChecked(ctrl->active_mode == 0);
+            actionDisconnected->setChecked(ctrl->active_mode != 0);
+
+            connect(actionDirect, &QAction::triggered, this, [ctrl]()
+            {
+                if(ctrl->active_mode != 0)
+                {
+                    ((RGBController_PhilipsHueEntertainment*)ctrl)->RequestMode(0);
+                }
+            });
+
+            connect(actionDisconnected, &QAction::triggered, this, [ctrl]()
+            {
+                if(ctrl->active_mode == 0)
+                {
+                    ((RGBController_PhilipsHueEntertainment*)ctrl)->RequestMode(1);
+                }
+            });
+        }
+
+        hueMenu->setEnabled(hue_found);
+    });
+
+    trayIconMenu->addSeparator();
 
     actionExit = new QAction(tr("Exit"), this );
     connect( actionExit, SIGNAL( triggered() ), this, SLOT( on_Exit() ));
@@ -1348,6 +1403,7 @@ void OpenRGBDialog::onDetectionEnded()
     {
         ShowLEDView();
     }
+
 }
 
 void OpenRGBDialog::on_SetAllDevices(unsigned char red, unsigned char green, unsigned char blue)
@@ -1537,6 +1593,7 @@ void OpenRGBDialog::on_ButtonLoadProfile_clicked()
             {
                 qobject_cast<OpenRGBDevicePage *>(ui->DevicesTabBar->widget(device))->UpdateDevice();
             }
+
         }
     }
 }

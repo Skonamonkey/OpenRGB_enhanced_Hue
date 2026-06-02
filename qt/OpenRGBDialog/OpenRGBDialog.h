@@ -103,6 +103,7 @@ private:
     QSystemTrayIcon *               trayIcon;
     QMenu *                         trayIconMenu;
     QMenu *                         profileMenu;
+    QMenu *                         hueMenu;
 
     QAction *                       actionExit;
     QString                         dialog_message;

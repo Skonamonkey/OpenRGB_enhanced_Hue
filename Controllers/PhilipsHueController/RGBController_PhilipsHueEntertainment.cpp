@@ -59,6 +59,8 @@ RGBController_PhilipsHueEntertainment::RGBController_PhilipsHueEntertainment(Phi
 
     active_mode = 1;
 
+    last_update_time = std::chrono::steady_clock::now() - std::chrono::milliseconds(1000);
+
     /*-----------------------------------------------------*\
     | The Philips Hue Entertainment Mode requires a packet  |
     | within 10 seconds of sending the lighting change in   |
@@ -98,9 +100,21 @@ void RGBController_PhilipsHueEntertainment::ResizeZone(int /*zone*/, int /*new_s
     \*---------------------------------------------------------*/
 }
 
+void RGBController_PhilipsHueEntertainment::RequestMode(int mode)
+{
+    user_enabled = (mode == 0);
+    SetMode(mode);
+    std::thread(&RGBController_PhilipsHueEntertainment::DeviceUpdateMode, this).detach();
+}
+
 void RGBController_PhilipsHueEntertainment::DeviceUpdateLEDs()
 {
-    last_update_time = std::chrono::steady_clock::now();
+    std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
+    if(std::chrono::duration_cast<std::chrono::milliseconds>(now - last_update_time).count() < 40)
+    {
+        return;
+    }
+    last_update_time = now;
 
     if(active_mode == 0)
     {
@@ -122,6 +136,12 @@ void RGBController_PhilipsHueEntertainment::DeviceUpdateMode()
 {
     if(active_mode == 0)
     {
+        if(!user_enabled)
+        {
+            active_mode = 1;
+            return;
+        }
+
         std::vector<RGBController*> rgb_controllers = ResourceManager::get()->GetRGBControllers();
 
         for(unsigned int controller_idx = 0; controller_idx < rgb_controllers.size(); controller_idx++)
